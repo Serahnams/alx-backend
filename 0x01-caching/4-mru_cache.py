@@ -1,40 +1,43 @@
-#!/usr/bin/python3
-""" Python caching systems """
+#!/usr/bin/env python3
+""" Python Module """
 from base_caching import BaseCaching
-from collections import OrderedDict
 
 
 class MRUCache(BaseCaching):
-    """ MRU caching system
-    """
+    """MRUCahce class"""
+
     def __init__(self):
-        """ Initialize class instance. """
         super().__init__()
-        self.cache_data = OrderedDict()
-        self.mru = ""
+        self.queue = []
 
     def put(self, key, item):
-        """ Add an item in the cache
-        """
-        if key and item:
-            if len(self.cache_data) >= BaseCaching.MAX_ITEMS:
-                if key in self.cache_data:
-                    self.cache_data.update({key: item})
-                    self.mru = key
-                else:
-                    # discard the most recently used item
-                    discarded = self.mru
-                    del self.cache_data[discarded]
-                    print("DISCARD: {}".format(discarded))
-                    self.cache_data[key] = item
-                    self.mru = key
-            else:
-                self.cache_data[key] = item
-                self.mru = key
+        """Put in cache"""
+        if key is None or item is None:
+            return
+
+        self.cache_data[key] = item
+
+        if len(self.cache_data) > BaseCaching.MAX_ITEMS:
+            if self.queue:
+                last = self.queue.pop()
+                del self.cache_data[last]
+                print("DISCARD: {}".format(last))
+
+        if key not in self.queue:
+            self.queue.append(key)
+        else:
+            self.mv_last_list(key)
 
     def get(self, key):
-        """ Get an item by key
-        """
-        if key in self.cache_data:
-            self.mru = key
-            return self.cache_data[key]
+        """Get form cache"""
+        item = self.cache_data.get(key, None)
+        if item is not None:
+            self.mv_last_list(key)
+        return item
+
+    def mv_last_list(self, item):
+        """Moves element"""
+        length = len(self.queue)
+        if self.queue[length - 1] != item:
+            self.queue.remove(item)
+            self.queue.append(item)
